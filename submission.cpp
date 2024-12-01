@@ -4,19 +4,21 @@
 #include<vector>
 using namespace std;
 
-vector<int> dfs(vector<vector<int>> flow, int source, int sink){
+vector<int> dfs(vector<vector<int>> flow, vector<vector<int>> capacity, int source, int sink){
     vector<int> path = {source};
-    vector<int> visited(flow.size());
+    vector<bool> visited(flow.size());
     visited[source] = true;
-    bool success = false;
     int i = 0;
     int u = source;
     while(u!=sink){
+        int f = flow[u][i]; //available flow
+        int rf = capacity[i][u] - flow[i][u]; //total capacity - available flow = reverse flow
+
         //if node i is unavailable, continue
-        if(visited[i]) i+=1;
+        if(visited[i] || (f==0 && rf==0)) i+=1;
 
         //if found an available forward edge, add it to the path
-        else if(flow[u][i]>0){
+        else if(f>0){
             path.push_back(i);
             visited[i] = true;
             u = i;
@@ -24,30 +26,20 @@ vector<int> dfs(vector<vector<int>> flow, int source, int sink){
             if(u==sink) return path;
         }
 
-        //if there are no available forward edges, search for reversed edge
+        //if found an available reverse edge, add it to the path
+        else if(rf>0){
+            path.push_back(i);
+            visited[i] = true;
+            u = i;
+            i = 0;
+            if(u==sink) return path;
+        }
+
+        //if there are no available forward or reversed edges, try a different path
         else if(i>=flow.size()){
-            int j = 0;
-            while(j<flow.size()){
-                //if node j is unavailable, continue
-                if(visited[j]) j+=1;
-                
-                //if found a reversed edge, add it to the path
-                else if(flow[j][u]>0){
-                    path.push_back(j);
-                    visited[j] = true;
-                    u = j;
-                    i = 0;
-                    if(u==sink) return path;
-                    break;
-                }
-                else j+=1;
-            }
-            //if there are no available forward or reversed edges, try a different path
-            if(j>=flow.size()){
-                path.pop_back();
-                if(path.empty()) return path;
-                u = path[path.size()];
-            }
+            path.pop_back();
+            if(path.empty()) return path;
+            u = path[path.size()];
         }
     }
     path.clear();
@@ -74,7 +66,7 @@ int main(int argc, char *argv[]) {
 
     //input (note: assumed that first read node is the source and last read node is the sink)
     while(infile >> std::hex >> node1 >> node2 >> w){
-        if(capacity.size()==0) source = node1-1;
+        if(capacity.size()==0) source = node1;
         int resize = node1;
         if(node1<node2) resize = node2;
         if(resize>capacity.size()){
@@ -86,26 +78,38 @@ int main(int argc, char *argv[]) {
                 flow[i].resize(resize);
             }
         }
-        capacity[node1-1][node2-1] = w;
-        flow[node1-1][node2-1] = w;
+        capacity[node1][node2] = w;
+        flow[node1][node2] = w;
     }
     infile.close();
-    sink = node2-1;
+    sink = node2;
 
     //actual algorithm here
     int maxflow, pathflow, temp = 0;
-    vector<int> path = dfs(flow,source,sink);
+
+    //call to dfs to find the first augmented path
+    vector<int> path = dfs(flow,capacity,source,sink);
+
+    //while(can find an augmented path)
     while(path.size()>1){
         pathflow = flow[path[0]][path[1]];
+        if(pathflow==0) pathflow = capacity[path[1]][path[0]] - flow[path[1]][path[0]]; //detects reversed edge
+
         for(int i=2; i<path.size(); i++){
             temp = flow[path[i-1]][path[i]];
+            if(temp==0) temp = capacity[path[i]][path[i-1]] - flow[path[i]][path[i-1]]; //detects reversed edge
             if(temp<pathflow) pathflow = temp;
         }
+        //^^finding pathflow, the max flow across that path
+
         for(int i=1; i<path.size(); i++){
-            flow[path[i-1]][path[i]] -= pathflow;
+            if(flow[path[i-1]][path[i]] > 0) flow[path[i-1]][path[i]] -= pathflow;
+            else flow[path[i]][path[i-1]] += pathflow; //detects reversed edge
         }
+        //^^updates flow[][] accordingly
+
         maxflow+=pathflow;
-        path = dfs(flow,source,sink);
+        path = dfs(flow,capacity,source,sink);
     }
 
     //output
