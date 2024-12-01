@@ -15,7 +15,7 @@ vector<int> dfs(vector<vector<int>> flow, vector<vector<int>> capacity, int sour
         if(i>=flow.size()){
             path.pop_back();
             if(path.empty()) return path;
-            u = path[path.size()];
+            u = path[path.size()-1];
             i = 0;
         }
         
@@ -91,7 +91,6 @@ int main(int argc, char *argv[]) {
 
     //call to dfs to find the first augmented path
     vector<int> path = dfs(flow,capacity,source,sink);
-    cout << "dfs executed successfully" << endl;
 
     //while(can find an augmented path)
     while(path.size()>1){
@@ -113,7 +112,6 @@ int main(int argc, char *argv[]) {
 
         maxflow+=pathflow;
         path = dfs(flow,capacity,source,sink);
-        cout << "dfs executed successfully" << endl;
     }
 
     //output
