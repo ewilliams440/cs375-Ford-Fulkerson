@@ -11,6 +11,14 @@ vector<int> dfs(vector<vector<int>> flow, vector<vector<int>> capacity, int sour
     int i = 0;
     int u = source;
     while(u!=sink){
+        //if there were no available forward or reversed edges, try a different path
+        if(i>=flow.size()){
+            path.pop_back();
+            if(path.empty()) return path;
+            u = path[path.size()];
+            i = 0;
+        }
+        
         int f = flow[u][i]; //available flow
         int rf = capacity[i][u] - flow[i][u]; //total capacity - available flow = reverse flow
 
@@ -33,13 +41,6 @@ vector<int> dfs(vector<vector<int>> flow, vector<vector<int>> capacity, int sour
             u = i;
             i = 0;
             if(u==sink) return path;
-        }
-
-        //if there are no available forward or reversed edges, try a different path
-        else if(i>=flow.size()){
-            path.pop_back();
-            if(path.empty()) return path;
-            u = path[path.size()];
         }
     }
     path.clear();
@@ -67,8 +68,8 @@ int main(int argc, char *argv[]) {
     //input (note: assumed that first read node is the source and last read node is the sink)
     while(infile >> std::hex >> node1 >> node2 >> w){
         if(capacity.size()==0) source = node1;
-        int resize = node1;
-        if(node1<node2) resize = node2;
+        int resize = node1+1;
+        if(node1<node2) resize = node2+1;
         if(resize>capacity.size()){
             capacity.resize(resize);
             flow.resize(resize);
@@ -86,9 +87,11 @@ int main(int argc, char *argv[]) {
 
     //actual algorithm here
     int maxflow, pathflow, temp = 0;
+    maxflow = 0;
 
     //call to dfs to find the first augmented path
     vector<int> path = dfs(flow,capacity,source,sink);
+    cout << "dfs executed successfully" << endl;
 
     //while(can find an augmented path)
     while(path.size()>1){
@@ -110,6 +113,7 @@ int main(int argc, char *argv[]) {
 
         maxflow+=pathflow;
         path = dfs(flow,capacity,source,sink);
+        cout << "dfs executed successfully" << endl;
     }
 
     //output
