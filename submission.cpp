@@ -64,6 +64,8 @@ int main(int argc, char *argv[]) {
     vector<bool> visited;
     int node1, node2, w = 0;
     int source, sink = 0;
+    node2 = 0;
+    source = 0;
 
     //input (note: assumed that first read node is the source and last read node is the sink)
     while(infile >> std::hex >> node1 >> node2 >> w){
@@ -84,6 +86,7 @@ int main(int argc, char *argv[]) {
     }
     infile.close();
     sink = node2;
+    if(source==sink) return -1;
 
     //actual algorithm here
     int maxflow, pathflow, temp = 0;
